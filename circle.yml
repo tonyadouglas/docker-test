@@ -1,0 +1,9 @@
+machine:
+  services:
+    - docker
+    
+dependencies:
+  override:
+    - docker info
+    - time docker build .
+    - time docker run phusion/passenger-ruby22 /bin/bash -c "ruby -e 'count = 0; while(count < 1000000000); count=count+1; end'"
