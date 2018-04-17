@@ -2,8 +2,20 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/ruby:2.4.1
+      - image: ubuntu:14.04
     steps:
       - checkout
-      - run: echo "A first hello"
+      - run: |
+        uname -a
+        sudo apt-get update -qq; sudo apt-get install -y sysbench mysql-server
+        echo 'skip-grant-tables' | sudo tee -a /etc/mysql/my.cnf
+        sudo service mysql restart
+        mysql -u root -e "create database test;"
 
+      - run: |
+        sysbench --test=cpu --cpu-max-prime=20000 --num-threads=1 run
+        sysbench --test=memory --num-threads=1 run
+        sysbench --test=fileio --file-total-size=1G prepare
+        sysbench --test=fileio --file-total-size=1G --file-test-mode=rndrw --init-rng=on --max-time=300 --max-requests=0 run
+        sysbench --test=oltp --oltp-table-size=1000000 --mysql-db=test --mysql-user=root prepare
+        sysbench --test=oltp --oltp-table-size=1000000 --mysql-db=test --mysql-user=root --mysql-password=$DATABASE_MYSQL_PASSWORD --max-time=60 --oltp-read-only=off --max-requests=0 --num-threads=1 run
