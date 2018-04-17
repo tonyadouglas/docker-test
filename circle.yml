@@ -3,7 +3,11 @@ machine:
     - docker
     
 dependencies:
+  pre:
+    - sudo apt-get update -qq; sudo apt-get install -y sysbench
+    - echo 'skip-grant-tables' | sudo tee -a /etc/mysql/my.cnf
+    - sudo service mysql restart
+    - mysql -u root -e "CREATE DATABASE test;"
   override:
-    - docker info
-    - time docker build .
-    - time docker run phusion/passenger-ruby22 /bin/bash -c "ruby -e 'count = 0; while(count < 1000000000); count=count+1; end'"
+    - sysbench --test=oltp --oltp-table-size=1000000 --mysql-db=test --mysql-user=root prepare
+    - sysbench --test=oltp --oltp-table-size=1000000 --mysql-db=test --mysql-user=root --mysql-password=$DATABASE_MYSQL_PASSWORD --max-time=60 --oltp-read-only=off --max-requests=0 --num-threads=1 run
