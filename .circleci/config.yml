@@ -13,13 +13,14 @@ jobs:
           sudo apt-get update -qq
           echo 'deb http://repo.mysql.com/apt/ubuntu/ trusty mysql-5.6' > /etc/apt/sources.list.d/mysql.list
           sudo apt-get update -qq; sudo apt-get install --force-yes -y curl wget sysbench mysql-server
+          echo 'skip-grant-tables' >> /etc/mysql/mysql.conf.d/mysqld.cnf
           sudo service mysql start
-          mysql -u root -proot -e "create database test;"
+          mysql -u root -proot -e "create database bench;"
 
       - run: |
           sysbench --test=cpu --cpu-max-prime=20000 --num-threads=1 run
           sysbench --test=memory --num-threads=1 run
           sysbench --test=fileio --file-total-size=1G prepare
           sysbench --test=fileio --file-total-size=1G --file-test-mode=rndrw --init-rng=on --max-time=300 --max-requests=0 run
-          sysbench --test=oltp --oltp-table-size=1000000 --mysql-db=test --mysql-user=root --mysql-password=root prepare
-          sysbench --test=oltp --oltp-table-size=1000000 --mysql-db=test --mysql-user=root --mysql-password=root --max-time=60 --oltp-read-only=off --max-requests=0 --num-threads=1 run
+          sysbench --test=oltp --oltp-table-size=1000000 --mysql-db=bench --mysql-user=root --mysql-password=root prepare
+          sysbench --test=oltp --oltp-table-size=1000000 --mysql-db=bench --mysql-user=root --mysql-password=root --max-time=60 --oltp-read-only=off --max-requests=0 --num-threads=1 run
