@@ -1,0 +1,8 @@
+language: ruby
+
+build:
+  pre_ci:
+    - uname -a
+    - docker --version
+    - time docker build .
+    - time docker run phusion/passenger-ruby22 /bin/bash -c "ruby -e 'count = 0; while(count < 1000000000); count=count+1; end'"
